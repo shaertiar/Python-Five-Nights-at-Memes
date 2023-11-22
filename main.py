@@ -12,15 +12,14 @@ def change_settings(change, to):
 # Функция отрисовки консольных данных
 def print_console():
     window.blit(console_font.render(f'To remove the console, click on (`) ', True, (255, 255, 255), (0, 0, 0)), (0, 0))
-    window.blit(console_font.render(f'FPS: {round(clock.get_fps(), 1)}/{float(FPS)}', True, (255, 255, 255), (0, 0, 0)), (0, console_font_size))
-    window.blit(console_font.render(f'Mouse pos: {pg.mouse.get_pos()}', True, (255, 255, 255), (0, 0, 0)), (0, console_font_size*2))
-    window.blit(console_font.render(f'Current night: {current_night}', True, (255, 255, 255), (0, 0, 0)), (0, console_font_size*3))
+    window.blit(console_font.render(f'FPS: {round(clock.get_fps(), 1)}/{float(FPS)}', True, (255, 255, 255), (0, 0, 0)), (0, 14))
+    window.blit(console_font.render(f'Mouse pos: {pg.mouse.get_pos()}', True, (255, 255, 255), (0, 0, 0)), (0, 28))
+    window.blit(console_font.render(f'Current night: {current_night}', True, (255, 255, 255), (0, 0, 0)), (0, 42))
 
 # Настройки
 settings = json.load(open(r'settings.json', 'r'))
 is_print_console = False
 current_night = settings['Current night']
-console_font_size = 14
 
 # Иниацилизация
 pg.init()
@@ -29,7 +28,7 @@ pg.init()
 clock = pg.time.Clock()
 
 # Создание шрифта
-console_font = pg.font.SysFont('consolas', console_font_size)
+console_font = pg.font.SysFont('consolas', 14)
 
 # Создание окна
 window = pg.display.set_mode((1200, 800))
@@ -52,6 +51,8 @@ while is_game:
         elif event.type == pg.KEYDOWN:
             if event.key == pg.K_BACKQUOTE:
                 is_print_console = not is_print_console
+            else:
+                game.pressed_on(event.key)
 
         # Обработка нажатий на кнопку мыши
         elif event.type == pg.MOUSEBUTTONDOWN:
