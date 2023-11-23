@@ -150,7 +150,7 @@ class MenuDisplay:
         self.window.blit(self.title_font.render('Five Night\'s at Memes', True, (255, 0, 0)), (50, 50))
         for button in self.buttons:
             self.window.blit(button, (self.buttons[button].x, self.buttons[button].y))
-        self.window.blit(self.subtitles_font.render('Made by Shaertiar (Alpha 0.2)', True, (255, 255, 255)), (6, 780))
+        self.window.blit(self.subtitles_font.render('Made by Shaertiar (Alpha 0.3.1)', True, (255, 255, 255)), (6, 780))
         self.window.blit(pg.transform.scale(pg.image.load(r'img\Freddy Fazbear main.png'), (800, 800)), (400, 200))
 
 # Класс настроек
