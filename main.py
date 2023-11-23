@@ -27,7 +27,7 @@ console_font = pg.font.SysFont('consolas', 14)
 # Создание окна
 window = pg.display.set_mode((1200, 800))
 pg.display.set_caption('Five Night\'s at Memes')
-FPS = 12
+FPS = 1200
 
 # Создание игры
 game = game.Game(window)

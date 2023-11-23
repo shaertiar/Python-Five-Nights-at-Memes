@@ -1,18 +1,10 @@
 import pygame as pg
 import json
 import random
+from translator import *
 
 # Иниацилизация
 pg.init()
-
-# Функция перевода
-def translate(text, language):
-    # Словарь со словами
-    translate_ru = {
-        'New game': 'Новая игра',
-        'Continue': 'Продолжить',
-        'Settings': 'Настройки',
-    }
 
 # Класс игры
 class Game:
@@ -23,11 +15,11 @@ class Game:
         self.settings = json.load(open(r'settings.json', 'r'))
         self.language = self.settings['Language']
         self.current_night = self.settings['Current night']
-        self.menu_display = MenuDisplay(self.window, self.current_night)
+        self.menu_display = MenuDisplay(self.window, self.current_night, self.language)
         self.settings_display = SettingDisplay(self.window, self.language)
-        self.backstory_display = BackStoryDisplay(self.window)
+        self.backstory_display = BackStoryDisplay(self.window, self.language)
         self.art_display = ArtDisplay(self.window)
-        self.gameplay = GamePlay(self.window)
+        self.gameplay = GamePlay(self.window, self.language)
         self.music_volume = 100
         self.effects_volume = 100
 
@@ -59,6 +51,15 @@ class Game:
         if self.backstory_display.is_next_stage == True:
             self.stage = 'art'
             self.backstory_display.is_next_stage = False
+
+        if self.settings_display.is_restart:
+            self.settings = json.load(open(r'settings.json', 'r'))
+            self.language = self.settings['Language']
+            self.menu_display = MenuDisplay(self.window, self.current_night, self.language)
+            self.settings_display = SettingDisplay(self.window, self.language)
+            self.backstory_display = BackStoryDisplay(self.window, self.language)
+            self.art_display = ArtDisplay(self.window)
+            self.gameplay = GamePlay(self.window, self.language)
 
     # Функция обработки нажатий клавиш
     def pressed_on(self, key):
@@ -129,9 +130,9 @@ class Game:
                             pg.mixer.Channel(1).set_volume(self.effects_volume/100)
 
                     # Нажатие на "en" \ "ru" 
-                    # elif button_num == 5:
-                    #     self.settings_display.change_language()
-                    #     self.language = self.settings_display.language
+                    elif button_num == 5:
+                        self.settings_display.change_language()
+                        self.language = self.settings_display.language
 
                     break
 
@@ -143,15 +144,16 @@ class Game:
 # Класс меню
 class MenuDisplay:
     # Конструктор
-    def __init__(self, window, current_night):
+    def __init__(self, window, current_night, language):
         self.window = window
         self.title_font = pg.font.SysFont('couriernew', 75)
         self.buttons_font = pg.font.SysFont('couriernew', 50)
         self.subtitles_font = pg.font.SysFont('consolas', 14)
+        self.language = language
         self.buttons = {
-            self.buttons_font.render('New game', True, (255, 0, 0)): pg.rect.Rect(50, 160, 240, 57),
-            self.buttons_font.render(f'Continue (night {current_night})', True, (255, 0, 0)): pg.rect.Rect(50, 257, 240, 57),
-            self.buttons_font.render('Settings', True, (255, 0, 0)): pg.rect.Rect(50, 354, 240, 57),
+            self.buttons_font.render(translate_text('New game', self.language), True, (255, 0, 0)): translate_objects('New game', self.language),
+            self.buttons_font.render(translate_text('Continue', self.language), True, (255, 0, 0)): translate_objects('Continue', self.language),
+            self.buttons_font.render(translate_text('Settings', self.language), True, (255, 0, 0)): translate_objects('Settings', self.language),
         }
         # Запуск эмбиента
         ambient = pg.mixer.Sound(r'sound\Ambient.mp3')
@@ -160,10 +162,10 @@ class MenuDisplay:
     # Функция отображения
     def draw(self):
         self.window.blit(pg.transform.scale(pg.image.load(f'img\white noise BG{random.randint(1, 12)}.jpg'), (1200, 800)), (0, 0))
-        self.window.blit(self.title_font.render('Five Night\'s at Memes', True, (255, 0, 0)), (50, 50))
+        self.window.blit(self.title_font.render(translate_text('Five Night\'s at Memes', self.language), True, (255, 0, 0)), (50, 50))
         for button in self.buttons:
             self.window.blit(button, (self.buttons[button].x, self.buttons[button].y))
-        self.window.blit(self.subtitles_font.render('Made by Shaertiar (Alpha 0.3.1)', True, (255, 255, 255)), (6, 780))
+        self.window.blit(self.subtitles_font.render(translate_text('Made by Shaertiar (Alpha 0.3.2)', self.language), True, (255, 255, 255)), (6, 780))
         self.window.blit(pg.transform.scale(pg.image.load(r'img\Freddy Fazbear main.png'), (800, 800)), (400, 200))
 
 # Класс настроек
@@ -174,45 +176,54 @@ class SettingDisplay:
         self.language = language
         self.buttons_font = pg.font.SysFont('couriernew', 50)
         self.buttons = {
-            self.buttons_font.render('Back', True, (255, 255, 255), (255, 0, 0)): pg.rect.Rect(0, 0, 120, 57),
-            self.buttons_font.render('+ add music volume', True, (255, 0, 0)): pg.rect.Rect(50, 107, 540, 57),
-            self.buttons_font.render('- remove music volume', True, (255, 0, 0)): pg.rect.Rect(50, 164, 630, 57),
-            self.buttons_font.render('+ add effects volume', True, (255, 0, 0)): pg.rect.Rect(50, 304, 600, 57),
-            self.buttons_font.render('- remove effects volume', True, (255, 0, 0)): pg.rect.Rect(50, 361, 690, 57),
-            self.buttons_font.render('In developing', True, (255, 0, 0)): pg.rect.Rect(50, 500, 60, 57)
+            self.buttons_font.render(translate_text('Back', self.language), True, (255, 255, 255), (255, 0, 0)): translate_objects('Back', self.language),
+            self.buttons_font.render(translate_text('+ add music volume', self.language), True, (255, 0, 0)): translate_objects('+ add music volume', self.language),
+            self.buttons_font.render(translate_text('- remove music volume', self.language), True, (255, 0, 0)): translate_objects('- remove music volume', self.language),
+            self.buttons_font.render(translate_text('+ add effects volume', self.language), True, (255, 0, 0)): translate_objects('+ add effects volume', self.language),
+            self.buttons_font.render(translate_text('- remove effects volume', self.language), True, (255, 0, 0)): translate_objects('- remove effects volume', self.language),
+            self.buttons_font.render(self.language, True, (255, 0, 0)): pg.rect.Rect(50, 500, 60, 57)
         }
+        self.is_restart = False
 
     # Функция отображения
     def draw(self, music_volume, effects_volume):
         self.window.blit(pg.transform.scale(pg.image.load(f'img\white noise BG{random.randint(1, 12)}.jpg'), (1200, 800)), (0, 0))
-        self.window.blit(self.buttons_font.render(f'Music volume ({music_volume}%{"min" if music_volume < 5 else "max" if music_volume > 95 else ""})', True, (255, 0, 0)), (50, 50))
-        self.window.blit(self.buttons_font.render(f'Effects volume ({effects_volume}%{"min" if effects_volume < 5 else "max" if effects_volume > 95 else ""})', True, (255, 0, 0)), (50, 246))
-        self.window.blit(self.buttons_font.render('Language', True, (255, 0 ,0)), (50, 443))
+        self.window.blit(self.buttons_font.render(translate_text('Music volume', self.language), True, (255, 0, 0)), (50, 50))
+        self.window.blit(self.buttons_font.render(translate_text('Effects volume', self.language), True, (255, 0, 0)), (50, 246))
+        self.window.blit(self.buttons_font.render(f' ({music_volume}%{"min" if music_volume < 5 else "max" if music_volume > 95 else ""})', True, (255, 0, 0)), translate_objects('Music volume', self.language))
+        self.window.blit(self.buttons_font.render(f' ({effects_volume}%{"min" if effects_volume < 5 else "max" if effects_volume > 95 else ""})', True, (255, 0, 0)), translate_objects('Effects volume', self.language))
+        self.window.blit(self.buttons_font.render(translate_text('Language', self.language), True, (255, 0 ,0)), (50, 443))
         for button in self.buttons:
             self.window.blit(button, (self.buttons[button].x, self.buttons[button].y))
 
     # Функция изменения языка
     def change_language(self):
-        if self.language == 'en': self.language = 'ru'
-        elif self.language == 'ru': self.language = 'en'
-    
+        if self.language == 'en': 
+            self.language = 'ru'
+        elif self.language == 'ru': 
+            self.language = 'en'
+
         self.buttons = {
-            self.buttons_font.render('Back', True, (255, 255, 255), (255, 0, 0)): pg.rect.Rect(0, 0, 120, 57),
-            self.buttons_font.render('+ add music volume', True, (255, 0, 0)): pg.rect.Rect(50, 107, 540, 57),
-            self.buttons_font.render('- remove music volume', True, (255, 0, 0)): pg.rect.Rect(50, 164, 630, 57),
-            self.buttons_font.render('+ add effects volume', True, (255, 0, 0)): pg.rect.Rect(50, 304, 600, 57),
-            self.buttons_font.render('- remove effects volume', True, (255, 0, 0)): pg.rect.Rect(50, 361, 690, 57),
+            self.buttons_font.render(translate_text('Back', self.language), True, (255, 255, 255), (255, 0, 0)): translate_objects('Back', self.language),
+            self.buttons_font.render(translate_text('+ add music volume', self.language), True, (255, 0, 0)): translate_objects('+ add music volume', self.language),
+            self.buttons_font.render(translate_text('- remove music volume', self.language), True, (255, 0, 0)): translate_objects('- remove music volume', self.language),
+            self.buttons_font.render(translate_text('+ add effects volume', self.language), True, (255, 0, 0)): translate_objects('+ add effects volume', self.language),
+            self.buttons_font.render(translate_text('- remove effects volume', self.language), True, (255, 0, 0)): translate_objects('- remove effects volume', self.language),
             self.buttons_font.render(self.language, True, (255, 0, 0)): pg.rect.Rect(50, 500, 60, 57)
         }
-    
-        settings = json.load(open(r'settings.json', 'r'))['language'] = self.language
+
+        settings = json.load(open(r'settings.json', 'r'))
+        settings['Language'] = self.language
         json.dump(settings, open(r'settings.json', 'w'))
+
+        self.is_restart = True
 
 # Класс предистории
 class BackStoryDisplay:
     # Конструктор
-    def __init__(self, window):
+    def __init__(self, window, language):
         self.window = window
+        self.language = language
         self.text_font = pg.font.SysFont('couriernew', 35)
         self.subtitles_font = pg.font.SysFont('couriernew', 25)
         self.is_next_stage = False
@@ -221,10 +232,11 @@ class BackStoryDisplay:
     # Функция отображения
     def draw(self):
         self.window.fill((0, 0, 0))
-        self.window.blit(self.subtitles_font.render('Press "Esc" to continue', True, (255, 255, 255)), (0, 0))
-        self.window.blit(self.text_font.render('After watching the FNaF movie, I decided to scroll', True, (255, 255, 255)), (50, 50))
-        self.window.blit(self.text_font.render('through my social network feed and suddenly passed', True, (255, 255, 255)), (50, 90))
-        self.window.blit(self.text_font.render('out... I woke up in this strange office...', True, (255, 255, 255)), (50, 130))
+        self.window.blit(self.subtitles_font.render(translate_text('Press "Esc" to continue', self.language), True, (255, 255, 255)), (0, 0))
+        self.window.blit(self.text_font.render(translate_text('After watching the FNaF movie, I decided to scroll', self.language), True, (255, 255, 255)), (50, 50))
+        self.window.blit(self.text_font.render(translate_text('through my social network feed and suddenly passed', self.language), True, (255, 255, 255)), (50, 79))
+        self.window.blit(self.text_font.render(translate_text('out... I woke up in this strange office...', self.language), True, (255, 255, 255)), (50, 108))
+        self.window.blit(self.text_font.render(translate_text('.', self.language), True, (255, 255, 255)), (50, 137))
 
         self.frames -= 1
 
@@ -265,7 +277,7 @@ class ArtDisplay:
 # Класс игрового процесса
 class GamePlay:
     # Конструктор
-    def __init__(self, window):
+    def __init__(self, window, language):
         self.window = window
         self.stage = 'office'
         # self.text_font = pg.font.SysFont('impact', 25)
