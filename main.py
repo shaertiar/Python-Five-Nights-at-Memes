@@ -3,12 +3,6 @@ import json
 
 import game
 
-# Функция изменения настроек
-def change_settings(change, to):
-    settings = json.load(open(r'settings.json', 'r'))
-    settings[change] = to
-    json.dump(settings, open(r'settings.json', 'w'))
-
 # Функция отрисовки консольных данных
 def print_console():
     window.blit(console_font.render(f'To remove the console, click on (`) ', True, (255, 255, 255), (0, 0, 0)), (0, 0))

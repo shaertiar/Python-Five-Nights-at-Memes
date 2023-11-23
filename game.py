@@ -11,7 +11,7 @@ def translate(text, language):
     translate_ru = {
         'New game': 'Новая игра',
         'Continue': 'Продолжить',
-        'Settings': 'Настройки'
+        'Settings': 'Настройки',
     }
 
 # Класс игры
@@ -20,13 +20,19 @@ class Game:
     def __init__(self, window):
         self.window = window
         self.stage = 'menu'
-        self.language = json.load(open(r'settings.json', 'r'))['Language']
-        self.menu_display = MenuDisplay(self.window)
+        self.settings = json.load(open(r'settings.json', 'r'))
+        self.language = self.settings['Language']
+        self.current_night = self.settings['Current night']
+        self.menu_display = MenuDisplay(self.window, self.current_night)
         self.settings_display = SettingDisplay(self.window, self.language)
-        self.backstory = BackStory(self.window)
+        self.backstory_display = BackStoryDisplay(self.window)
+        self.art_display = ArtDisplay(self.window)
         self.gameplay = GamePlay(self.window)
         self.music_volume = 100
         self.effects_volume = 100
+
+        pg.mixer.Channel(0).set_volume(self.music_volume/100)
+        pg.mixer.Channel(1).set_volume(self.effects_volume/100)
 
     # Функция отображения экранов
     def draw(self):
@@ -37,21 +43,28 @@ class Game:
             self.settings_display.draw(self.music_volume, self.effects_volume)
 
         elif self.stage == 'backstory':
-            self.backstory.draw()
+            self.backstory_display.draw()
 
         elif self.stage == 'gameplay':
             self.gameplay.draw()
 
-        if self.backstory.is_next_stage == True:
+        elif self.stage == 'art':
+            self.art_display.draw()
+
+        if self.art_display.is_next_stage == True:
             self.stage = 'gameplay'
             self.gameplay.start_music()
-            self.backstory.is_next_stage = False
+            self.art_display.is_next_stage = False
+
+        if self.backstory_display.is_next_stage == True:
+            self.stage = 'art'
+            self.backstory_display.is_next_stage = False
 
     # Функция обработки нажатий клавиш
     def pressed_on(self, key):
         if self.stage == 'backstory':
             if key == pg.K_ESCAPE:
-                self.backstory.skip()
+                self.backstory_display.skip()
 
     # Функция обработки нажатия мыши
     def clicked_on(self, mouse_pos):
@@ -65,11 +78,11 @@ class Game:
                     # Нажатие на "New game"
                     if button_num == 0:
                         self.stage = 'backstory'
-                        self.backstory.start_music()
+                        self.backstory_display.start_music()
 
                     # Нажатие на "Continue"
                     elif button_num == 1:
-                        self.stage = 'gameplay'
+                        self.stage = 'art'
                         self.gameplay.start_music()
 
                     # Нажатие на "Settings"
@@ -130,14 +143,14 @@ class Game:
 # Класс меню
 class MenuDisplay:
     # Конструктор
-    def __init__(self, window):
+    def __init__(self, window, current_night):
         self.window = window
         self.title_font = pg.font.SysFont('couriernew', 75)
         self.buttons_font = pg.font.SysFont('couriernew', 50)
         self.subtitles_font = pg.font.SysFont('consolas', 14)
         self.buttons = {
             self.buttons_font.render('New game', True, (255, 0, 0)): pg.rect.Rect(50, 160, 240, 57),
-            self.buttons_font.render('Continue', True, (255, 0, 0)): pg.rect.Rect(50, 257, 240, 57),
+            self.buttons_font.render(f'Continue (night {current_night})', True, (255, 0, 0)): pg.rect.Rect(50, 257, 240, 57),
             self.buttons_font.render('Settings', True, (255, 0, 0)): pg.rect.Rect(50, 354, 240, 57),
         }
         # Запуск эмбиента
@@ -182,7 +195,7 @@ class SettingDisplay:
     def change_language(self):
         if self.language == 'en': self.language = 'ru'
         elif self.language == 'ru': self.language = 'en'
-
+    
         self.buttons = {
             self.buttons_font.render('Back', True, (255, 255, 255), (255, 0, 0)): pg.rect.Rect(0, 0, 120, 57),
             self.buttons_font.render('+ add music volume', True, (255, 0, 0)): pg.rect.Rect(50, 107, 540, 57),
@@ -191,12 +204,12 @@ class SettingDisplay:
             self.buttons_font.render('- remove effects volume', True, (255, 0, 0)): pg.rect.Rect(50, 361, 690, 57),
             self.buttons_font.render(self.language, True, (255, 0, 0)): pg.rect.Rect(50, 500, 60, 57)
         }
-
+    
         settings = json.load(open(r'settings.json', 'r'))['language'] = self.language
         json.dump(settings, open(r'settings.json', 'w'))
 
 # Класс предистории
-class BackStory:
+class BackStoryDisplay:
     # Конструктор
     def __init__(self, window):
         self.window = window
@@ -228,20 +241,42 @@ class BackStory:
         music = pg.mixer.Sound(r'sound\Backstory.mp3')
         pg.mixer.Channel(0).play(music)
 
+# Класс слайда
+class ArtDisplay:
+    # Конструктор
+    def __init__(self, window):
+        self.window = window
+        self.is_next_stage = False
+        self.frames = 36
+
+    # Функция отрисовки
+    def draw(self):
+        self.window.blit(pg.transform.scale(pg.image.load(r'img\Slide.png'), (1200, 800)), (0, 0))
+
+        self.frames -= 1
+
+        if self.frames <= 0:
+            self.skip()
+
+    # Функция продолжения
+    def skip(self):
+        self.is_next_stage = True
+
 # Класс игрового процесса
 class GamePlay:
     # Конструктор
     def __init__(self, window):
         self.window = window
         self.stage = 'office'
-        self.text_font = pg.font.SysFont('impact', 25)
+        # self.text_font = pg.font.SysFont('impact', 25)
+        self.text_font = pg.font.Font(r'font\Segment16B Regular.ttf', 25)
         self.cam_font = pg.font.SysFont('consolas', 20)
         self.cam_small_font = pg.font.SysFont('consolas', 15)
         self.cam_num = 1
         self.is_cam_ventilation = False
         self.game_display = GameDisplay(self.window)
         self.buttons = {
-            self.text_font.render(f'{"Open":^300}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 769, 1200, 31),
+            self.text_font.render(f'{"Open":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
         }
         self.time = 7200
 
@@ -249,9 +284,6 @@ class GamePlay:
     def draw(self):
         self.window.fill((0, 0, 0))
         # self.game_display.draw(self.stage)
-
-        # Отображение времени
-        self.window.blit(self.text_font.render(f'{self.return_time()}', True, (255, 255, 255)), (0, 0))
 
         # Если открыт экран
         if self.stage == 'display':
@@ -261,7 +293,7 @@ class GamePlay:
                 self.window.blit(pg.transform.scale(pg.image.load(r'img\ventilation map.png'), (300, 300)), (900, 469))
                 # Создаем кнопки вентеляции
                 self.buttons = {
-                    self.text_font.render(f'{"Open":^300}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 769, 1200, 31),
+                    self.text_font.render(f'{"Close":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
                     self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
                     self.cam_small_font.render(' 10', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1139, 735, 24, 15),
                     self.cam_small_font.render(' 11', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(957, 702, 24, 15),
@@ -273,7 +305,7 @@ class GamePlay:
                 self.window.blit(pg.transform.scale(pg.image.load(r'img\map.png'), (300, 300)), (900, 469))
                 # Создаем кнопки без вентеляции
                 self.buttons = {
-                    self.text_font.render(f'{"Open":^300}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 769, 1200, 31),
+                    self.text_font.render(f'{"Close":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
                     self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
                     self.cam_font.render(' 1 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1105, 484, 42, 20),
                     self.cam_font.render(' 2 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(972, 649, 42, 20),
@@ -295,6 +327,9 @@ class GamePlay:
             for button in self.buttons:
                 self.window.blit(button, (self.buttons[button].x, self.buttons[button].y))
                 break
+
+        # Отображение времени
+        self.window.blit(self.text_font.render(f'{self.return_time()}', True, (255, 255, 255)), (0, 0))
 
         # Уменьшаем время (увеличиваем)
         self.time -= 1
@@ -336,7 +371,7 @@ class GamePlay:
             if self.stage == 'office':
                 if self.is_cam_ventilation:
                     self.buttons = {
-                        self.text_font.render(f'{"Open":^300}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 769, 1200, 31),
+                        self.text_font.render(f'{"Open":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
                         self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
                         self.cam_small_font.render(' 10', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1139, 735, 24, 15),
                         self.cam_small_font.render(' 11', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(957, 702, 24, 15),
@@ -344,7 +379,7 @@ class GamePlay:
                     }
                 else:
                     self.buttons = {
-                        self.text_font.render(f'{"Open":^300}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 769, 1200, 31),
+                        self.text_font.render(f'{"Open":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
                         self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
                         self.cam_font.render(' 1 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1105, 484, 42, 20),
                         self.cam_font.render(' 2 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(972, 649, 42, 20),
@@ -359,7 +394,7 @@ class GamePlay:
             else:
                 if self.is_cam_ventilation:
                     self.buttons = {
-                        self.text_font.render(f'{"Close":^300}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 769, 1200, 31),
+                        self.text_font.render(f'{"Close":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
                         self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
                         self.cam_small_font.render(' 10', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1139, 735, 24, 15),
                         self.cam_small_font.render(' 11', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(957, 702, 24, 15),
@@ -367,7 +402,7 @@ class GamePlay:
                     }
                 else:
                     self.buttons = {
-                        self.text_font.render(f'{"Close":^300}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 769, 1200, 31),
+                        self.text_font.render(f'{"Close":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
                         self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
                         self.cam_font.render(' 1 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1105, 484, 42, 20),
                         self.cam_font.render(' 2 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(972, 649, 42, 20),
@@ -393,10 +428,8 @@ class GamePlay:
         music = pg.mixer.Sound(r'sound\Ambient2.mp3')
         pg.mixer.Channel(0).play(music)
 
-
 # Класс офиса
 class GameDisplay:
-
     # Конструктор
     def __init__(self, window):
         self.window = window
@@ -411,6 +444,3 @@ if __name__ == '__main__':
     pg.init()
 
     print(pg.font.get_fonts())
-
-    # ⟰ ⟱
-    # ⮝ ⮟
