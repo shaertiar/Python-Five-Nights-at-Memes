@@ -44,6 +44,7 @@ class Game:
 
         if self.backstory.is_next_stage == True:
             self.stage = 'gameplay'
+            self.gameplay.start_music()
             self.backstory.is_next_stage = False
 
     # Функция обработки нажатий клавиш
@@ -69,6 +70,7 @@ class Game:
                     # Нажатие на "Continue"
                     elif button_num == 1:
                         self.stage = 'gameplay'
+                        self.gameplay.start_music()
 
                     # Нажатие на "Settings"
                     elif button_num == 2:
@@ -324,6 +326,9 @@ class GamePlay:
                 # Нажатие на кнопку отображения вентиляционной карты
                 elif button_num == 1:
                     self.is_cam_ventilation = not self.is_cam_ventilation
+                    # Звук нажатия
+                    click_sound = pg.mixer.Sound(r'sound\Click4.mp3')
+                    pg.mixer.Channel(1).play(click_sound)
 
             button_num += 1
 
@@ -385,7 +390,7 @@ class GamePlay:
     # Функция запуска музыкки
     def start_music(self):
         # Запуск музыки
-        music = pg.mixer.Sound(r'sound\Backstory.mp3')
+        music = pg.mixer.Sound(r'sound\Ambient2.mp3')
         pg.mixer.Channel(0).play(music)
 
 
