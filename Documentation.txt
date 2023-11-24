@@ -1,0 +1,25 @@
+Development team:
+  Producer: Shaertiar
+  Developer: Shaertiar
+  Game designer: Shaertiar
+  Artist: Shaertiar, Reteego
+  Game design of levels: Shaertiar
+  Sound engineer: Shaertiar
+  Testers: Igor Khozhainov, Alexander Dikusha
+
+Game engine: Python & PyGame
+Link to all code: https://github.com/shaertiar/Python-Five-Nights-at-Memes.git
+
+
+
+Команда разработки:
+  Продюссер: Shaertiar
+  Разработчик: Shaertiar
+  Геймдизайнер: Shaertiar
+  Художник: Shaertiar, Reteego
+  Геймдизайн уровней: Shaertiar
+  Звукорежисер: Shaertiar
+  Тестировщики: Игорь Хожайнов, Александр Дикуша
+
+Игровой движок: Python & PyGame
+Ссылка на весь код: https://github.com/shaertiar/Python-Five-Nights-at-Memes.git
