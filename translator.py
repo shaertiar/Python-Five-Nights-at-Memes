@@ -11,9 +11,9 @@ def translate_text(text, language):
         'Made by Shaertiar (Alpha 0.3.2)': 'Сделанj Shaertiar-ом (Alpha 0.3.2)',
         'Back': 'Назад',
         '+ add music volume': '+ Увеличить громкость музыки',
-        '- remove music volume': '+ Уменьшить громкость музыки',
+        '- remove music volume': '- Уменьшить громкость музыки',
         '+ add effects volume': '+ Увеличить громкость эффектов',
-        '- remove effects volume': '+ Уменьшить громкость эффектов',
+        '- remove effects volume': '- Уменьшить громкость эффектов',
         'Music volume': 'Громкость музыки',
         'Effects volume': 'Громкость эффектов',
         'Language': 'Язык',
@@ -35,6 +35,7 @@ def translate_objects(text, language):
     translate_en = {
         'New game': pg.rect.Rect(50, 160, 240, 57),
         'Continue': pg.rect.Rect(50, 257, 240, 57),
+        'Continue night':  (290, 257),
         'Settings': pg.rect.Rect(50, 354, 240, 57),
         'Back': pg.rect.Rect(0, 0, 120, 57),
         '+ add music volume': pg.rect.Rect(50, 107, 540, 57),
@@ -43,12 +44,12 @@ def translate_objects(text, language):
         '- remove effects volume': pg.rect.Rect(50, 361, 690, 57),
         'Music volume': (410, 50),
         'Effects volume': (470, 246),
-        # 480, 540
     }
     # Словарь со словами для Русского
     translate_ru = {
         'New game': pg.rect.Rect(50, 160, 300, 57),
         'Continue': pg.rect.Rect(50, 257, 300, 57),
+        'Continue night':  (350, 257),
         'Settings': pg.rect.Rect(50, 354, 270, 57),
         'Back': pg.rect.Rect(0, 0, 150, 57),
         '+ add music volume': pg.rect.Rect(50, 107, 840, 57),
@@ -57,7 +58,6 @@ def translate_objects(text, language):
         '- remove effects volume': pg.rect.Rect(50, 361, 900, 57),
         'Music volume': (530, 50),
         'Effects volume': (590, 246),
-        # 480, 540
     }
 
     if language == 'en':

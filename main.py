@@ -27,7 +27,7 @@ console_font = pg.font.SysFont('consolas', 14)
 # Создание окна
 window = pg.display.set_mode((1200, 800))
 pg.display.set_caption('Five Night\'s at Memes')
-FPS = 1200
+FPS = 12
 
 # Создание игры
 game = game.Game(window)
@@ -35,6 +35,9 @@ game = game.Game(window)
 # Игровой цикл
 is_game = True
 while is_game:
+    settings = json.load(open(r'settings.json', 'r'))
+    current_night = settings['Current night']
+
     # Обработка событий
     for event in pg.event.get():
         # Обработка выхода из игры
