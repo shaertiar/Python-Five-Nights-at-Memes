@@ -303,7 +303,6 @@ class GamePlay:
         self.text_font = pg.font.Font(r'font\Segment16B Regular.ttf', 25)
         self.cam_font = pg.font.SysFont('consolas', 20)
         self.cam_small_font = pg.font.SysFont('consolas', 15)
-        self.cam_num = 1
         self.is_cam_ventilation = False
         self.game_display = GameDisplay(self.window, self.language)
         self.win_display = WinDisplay(self.window)
@@ -314,7 +313,7 @@ class GamePlay:
 
     # Функция отображения
     def draw(self):
-        self.game_display.draw(self.stage, self.cam_num)
+        self.game_display.draw(self.stage)
         
         # Если открыт экран
         if self.stage == 'display':
@@ -424,51 +423,51 @@ class GamePlay:
                 # Нажатие на камеру
                 elif button_num == 2:
                     if self.is_cam_ventilation:
-                        self.cam_num = 10
+                        self.game_display.cam_num = 10
                     else:
-                        self.cam_num = 1
+                        self.game_display.cam_num = 1
 
                 # Нажатие на камеру
                 elif button_num == 3:
                     if self.is_cam_ventilation:
-                        self.cam_num = 11
+                        self.game_display.cam_num = 11
                     else:
-                        self.cam_num = 2
+                        self.game_display.cam_num = 2
 
                 # Нажатие на камеру
                 elif button_num == 4:
                     if self.is_cam_ventilation:
-                        self.cam_num = 12
+                        self.game_display.cam_num = 12
                     else:
-                        self.cam_num = 3
+                        self.game_display.cam_num = 3
 
                 # Нажатие на камеру
                 elif button_num == 4:
-                    self.cam_num = 3
+                    self.game_display.cam_num = 3
 
                 # Нажатие на камеру 
                 elif button_num == 5:
-                    self.cam_num = 4
+                    self.game_display.cam_num = 4
 
                 # Нажатие на камеру
                 elif button_num == 6:
-                    self.cam_num = 5
+                    self.game_display.cam_num = 5
 
                 # Нажатие на камеру
                 elif button_num == 7:
-                    self.cam_num = 6
+                    self.game_display.cam_num = 6
 
                 # Нажатие на камеру
                 elif button_num == 8:
-                    self.cam_num = 7
+                    self.game_display.cam_num = 7
 
                 # Нажатие на камеру
                 elif button_num == 9:
-                    self.cam_num = 8
+                    self.game_display.cam_num = 8
 
                 # Нажатие на камеру
                 elif button_num == 10:
-                    self.cam_num = 9
+                    self.game_display.cam_num = 9
 
             button_num += 1
 
@@ -540,14 +539,15 @@ class GameDisplay:
         self.window = window
         self.language = language
         self.camera = Camera(self.window)
+        self.cam_num = 1
 
     # Функция отрисовки
-    def draw(self, stage, cam_num=0):
+    def draw(self, stage, cam_num=1):
         if stage == 'office':
             self.window.fill((0, 123, 0))
 
         elif stage == 'display':
-            self.camera.draw(cam_num)
+            self.camera.draw(self.cam_num)
 
 # Класс окна победы 
 class WinDisplay:
@@ -581,27 +581,45 @@ class Camera:
     # Конструктор
     def __init__(self, window):
         self.window = window
+        self.animatronics = [
+            Animatronics('Man'),
+            Animatronics('Bear'),
+            Animatronics('Grandfather'),
+            Animatronics('Airplane', 3)
+        ]
+        # self.man = Animatronics('Man')
+        # self.bear = Animatronics('bear')
+        # self.grandfather = Animatronics('grandfather')
+        # self.Airplane = Animatronics('Airplane')
+        # self.Airplane.map_pos = 3
 
     # Функция отрисовки
     def draw(self, cam_num):
         self.window.fill((cam_num*20, cam_num*20, cam_num*20))
+        for animatronic in self.animatronics:
+            animatronic.draw(self.window, cam_num)
+
 
 # Класс аниматроников
 class Animatronics:
     # Конструктор
-    def __init__(self, name):
+    def __init__(self, name, pos=1):
         self.name = name
+        self.map_pos = pos
+        self.stage = 0
 
     # Функция отрисовки
-    def draw(self):
-        if name == 'Man':
-            ...
-        elif name == 'Bear':
-            ...
-        elif name == 'Grandfather':
-            ...
-        elif name == 'Airplane':
-            ...
+    def draw(self, window, map_num):
+        # if map_num == 1:
+        if self.map_pos == map_num:
+            if self.name == 'Man':
+                pg.draw.rect(window, (209, 188, 138), pg.rect.Rect(1150, 10, 20, 20))
+            elif self.name == 'Bear':
+                pg.draw.rect(window, (131, 71, 19), pg.rect.Rect(1170, 10, 20, 20))
+            elif self.name == 'Grandfather':
+                pg.draw.rect(window, (19, 29, 131), pg.rect.Rect(1150, 30, 20, 20))
+            elif self.name == 'Airplane':
+                pg.draw.rect(window, (255, 0, 0), pg.rect.Rect(1170, 30, 20, 20))
 
     # Функция перемещения 
     def move(self):
