@@ -8,7 +8,7 @@ def translate_text(text, language):
         'Continue': 'Продолжить',
         'Settings': 'Настройки',
         'Five Night\'s at Memes': 'Пять ночей с Мемами',
-        'Made by Shaertiar (Alpha 0.5.1)': 'Сделанj Shaertiar-ом (Alpha 0.5.1)',
+        'Made by Shaertiar (Alpha 0.6.1)': 'Сделанj Shaertiar-ом (Alpha 0.6.1)',
         'Back': 'Назад',
         '+ add music volume': '+ Увеличить громкость музыки',
         '- remove music volume': '- Уменьшить громкость музыки',
