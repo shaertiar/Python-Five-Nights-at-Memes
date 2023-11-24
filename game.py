@@ -178,7 +178,7 @@ class MenuDisplay:
         self.window.blit(pg.transform.scale(pg.image.load(f'img\white noise BG{random.randint(1, 12)}.jpg'), (1200, 800)), (0, 0))
         self.window.blit(self.title_font.render(translate_text('Five Night\'s at Memes', self.language), True, (255, 0, 0)), (50, 50))
         self.window.blit(self.buttons_font.render(f' ({str(self.current_night)})', True, (255, 0, 0)), translate_objects('Continue night', self.language))
-        self.window.blit(self.subtitles_font.render(translate_text('Made by Shaertiar (Alpha 0.3.2)', self.language), True, (255, 255, 255)), (6, 780))
+        self.window.blit(self.subtitles_font.render(translate_text('Made by Shaertiar (Alpha 0.5.1)', self.language), True, (255, 255, 255)), (6, 780))
         self.window.blit(pg.transform.scale(pg.image.load(r'img\Freddy Fazbear main.png'), (800, 800)), (400, 200))
         for button in self.buttons:
             self.window.blit(button, (self.buttons[button].x, self.buttons[button].y))
