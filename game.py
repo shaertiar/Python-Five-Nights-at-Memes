@@ -25,12 +25,13 @@ class Game:
         self.settings_display = SettingDisplay(self.window, self.language)
         self.backstory_display = BackStoryDisplay(self.window, self.language)
         self.art_display = ArtDisplay(self.window)
-        self.gameplay = GamePlay(self.window, self.language)
+        self.gameplay = GamePlay(self.window, self.language, self.current_night)
         self.music_volume = 100
         self.effects_volume = 100
 
         pg.mixer.Channel(0).set_volume(self.music_volume/100)
         pg.mixer.Channel(1).set_volume(self.effects_volume/100)
+        pg.mixer.Channel(2).set_volume(self.effects_volume/100)
 
     # Функция отображения экранов
     def draw(self):
@@ -66,15 +67,15 @@ class Game:
             self.settings_display = SettingDisplay(self.window, self.language)
             self.backstory_display = BackStoryDisplay(self.window, self.language)
             self.art_display = ArtDisplay(self.window)
-            self.gameplay = GamePlay(self.window, self.language)
+            self.gameplay = GamePlay(self.window, self.language, self.current_night)
 
         if self.gameplay.stage == 'menu':
-            self.gameplay = GamePlay(self.window, self.language)
             self.stage = 'menu'
             self.menu_display.start_music()
             self.settings = json.load(open(r'settings.json', 'r'))
             self.current_night = self.settings['Current night']
             self.menu_display.current_night = self.current_night
+            self.gameplay = GamePlay(self.window, self.language, self.current_night)
 
     # Функция обработки нажатий клавиш
     def pressed_on(self, key):
@@ -137,12 +138,14 @@ class Game:
                         if self.effects_volume <= 95:
                             self.effects_volume = int(self.effects_volume + 5)
                             pg.mixer.Channel(1).set_volume(self.effects_volume/100)
+                            pg.mixer.Channel(2).set_volume(self.effects_volume/100)
 
                     # Нажатие на "- remove effects volume"
                     elif button_num == 4:
                         if self.effects_volume >= 5:
                             self.effects_volume = int(self.effects_volume - 5)
                             pg.mixer.Channel(1).set_volume(self.effects_volume/100)
+                            pg.mixer.Channel(2).set_volume(self.effects_volume/100)
 
                     # Нажатие на "en" \ "ru" 
                     elif button_num == 5:
@@ -296,19 +299,34 @@ class ArtDisplay:
 # Класс игрового процесса
 class GamePlay:
     # Конструктор
-    def __init__(self, window, language):
+    def __init__(self, window, language, current_night):
         self.window = window
         self.language = language
         self.stage = 'office'
+        self.current_night = current_night
         self.text_font = pg.font.Font(r'font\Segment16B Regular.ttf', 25)
         self.cam_font = pg.font.SysFont('consolas', 20)
         self.cam_small_font = pg.font.SysFont('consolas', 15)
-        self.is_cam_ventilation = False
         self.game_display = GameDisplay(self.window, self.language)
         self.win_display = WinDisplay(self.window)
+        self.over_display = OverDisplay(self.window)
+        self.map_image = pg.transform.scale(pg.image.load(r'img\ventilation map.png'), (300, 300))
+        self.ventilation_map_image = pg.transform.scale(pg.image.load(r'img\map.png'), (300, 300))
+        self.is_cam_ventilation = False
+        self.door1 = False
+        self.door2 = False
+        self.door3 = False
+        self.energy = 100
+        self.killer = ''
         self.buttons = {
             self.text_font.render(f'{"Open":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
         }
+        self.animatronics = [
+            Animatronics('Man'),
+            Animatronics('Bear'),
+            Animatronics('Grandfather'),
+            Animatronics('Airplane', 3)
+        ]
         self.time = 4320
 
     # Функция отображения
@@ -320,33 +338,11 @@ class GamePlay:
             # Если включена камера винтеляции
             if self.is_cam_ventilation:
                 # Отображаем карту вентеляции
-                self.window.blit(pg.transform.scale(pg.image.load(r'img\ventilation map.png'), (300, 300)), (900, 469))
-                # Создаем кнопки вентеляции
-                self.buttons = {
-                    self.text_font.render(f'{"Close":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
-                    self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
-                    self.cam_small_font.render(' 10', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1139, 735, 24, 15),
-                    self.cam_small_font.render(' 11', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(957, 702, 24, 15),
-                    self.cam_small_font.render(' 12', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1037, 740, 24, 15)
-                }
+                self.window.blit(self.map_image, (900, 469))
             # Если камера вентеляции не включена
             else:
                 # Отображаем обычную карту
-                self.window.blit(pg.transform.scale(pg.image.load(r'img\map.png'), (300, 300)), (900, 469))
-                # Создаем кнопки без вентеляции
-                self.buttons = {
-                    self.text_font.render(f'{"Close":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
-                    self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
-                    self.cam_font.render(' 1 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1105, 484, 42, 20),
-                    self.cam_font.render(' 2 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(972, 649, 42, 20),
-                    self.cam_font.render(' 3 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1073, 627, 42, 20),
-                    self.cam_font.render(' 4 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(990, 482, 42, 20),
-                    self.cam_font.render(' 5 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(905, 628, 42, 20),
-                    self.cam_font.render(' 6 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(971, 731, 42, 20),
-                    self.cam_small_font.render(' 7 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(938, 654, 24, 15),
-                    self.cam_small_font.render(' 8 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1050, 727, 24, 15),
-                    self.cam_small_font.render(' 9 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1089, 727, 24, 15),
-                }
+                self.window.blit(self.ventilation_map_image, (900, 469))
 
             # Отображаем все нужные кнопки
             for button in self.buttons:
@@ -354,6 +350,9 @@ class GamePlay:
 
             # Отображение времени
             self.window.blit(self.text_font.render(f'{self.return_time()}', True, (255, 255, 255)), (0, 0))
+
+            # Отображение энергии
+            self.window.blit(self.text_font.render(f'{int(self.energy):03}%', True, (255, 255, 255)), (0, 25))
 
         # Отображаем лишь кнопку открытия монитора
         elif self.stage == 'office':
@@ -368,9 +367,36 @@ class GamePlay:
         elif self.stage == 'win':
             self.win_display.draw()
 
+        # Отображение окна проигрыша
+        elif self.stage == 'over':
+            self.over_display.draw(self.killer)
 
-        # Уменьшаем время (увеличиваем)
+        for animatronic in self.animatronics:
+            if self.stage == 'display':
+                animatronic.draw(self.window, self.game_display.cam_num)
+                animatronic.move(self.current_night)
+
+                if animatronic.is_attacked == True:
+                    if animatronic.name == 'Airplane':
+                        if self.door2:
+                            animatronics.is_attacked = False
+                        else:
+                            self.stage = 'over'
+                            self.killer = animatronic.name
+
         self.time -= 1
+
+        if self.stage != 'office':
+            self.energy -= 0.005
+        else:
+            self.energy -= 0.002
+
+        if self.door1:
+            self.energy -= 0.04
+        if self.door2:
+            self.energy -= 0.04
+        if self.door1:
+            self.energy -= 0.03
 
         if self.time <= 0:
             self.time = 121
@@ -379,8 +405,14 @@ class GamePlay:
                 self.win_display.start_music()
                 settings_change('Current night', json.load(open(r'settings.json', 'r'))['Current night']+1)
 
-        if self.win_display.is_next_stage:
+        if self.energy <= 0:
+            if self.stage != 'win':
+                self.stage = 'over'
+                self.over_display.start_music()
+
+        if self.win_display.is_next_stage or self.over_display.is_next_stage:
             self.win_display = WinDisplay(self.window)
+            self.over_display = OverDisplay(self.window)
             self.stage = 'menu'
 
     # Функция обработки нажатий мыши
@@ -411,14 +443,14 @@ class GamePlay:
 
                         self.stage = 'office'
 
-                        is_need_change = True
-
                 # Нажатие на кнопку отображения вентиляционной карты
                 elif button_num == 1:
                     self.is_cam_ventilation = not self.is_cam_ventilation
                     # Звук нажатия
                     click_sound = pg.mixer.Sound(r'sound\Click4.mp3')
                     pg.mixer.Channel(1).play(click_sound)
+
+                    is_need_change = True
 
                 # Нажатие на камеру
                 elif button_num == 2:
@@ -441,13 +473,17 @@ class GamePlay:
                     else:
                         self.game_display.cam_num = 3
 
-                # Нажатие на камеру
-                elif button_num == 4:
-                    self.game_display.cam_num = 3
-
                 # Нажатие на камеру 
                 elif button_num == 5:
-                    self.game_display.cam_num = 4
+                    if self.is_cam_ventilation:
+                        if self.door3:
+                            pg.mixer.Channel(2).play(pg.mixer.Sound(r'sound\Door3 close.mp3'))
+                        else:
+                            pg.mixer.Channel(2).play(pg.mixer.Sound(r'sound\Door3 open.mp3'))
+                        self.door3 = not self.door3
+                        is_need_change = True
+                    else:
+                        self.game_display.cam_num = 4
 
                 # Нажатие на камеру
                 elif button_num == 6:
@@ -472,37 +508,15 @@ class GamePlay:
             button_num += 1
 
         if is_need_change:
-            if self.stage == 'office':
-                if self.is_cam_ventilation:
-                    self.buttons = {
-                        self.text_font.render(f'{"Open":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
-                        self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
-                        self.cam_small_font.render(' 10', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1139, 735, 24, 15),
-                        self.cam_small_font.render(' 11', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(957, 702, 24, 15),
-                        self.cam_small_font.render(' 12', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1037, 740, 24, 15)
-                    }
-                else:
-                    self.buttons = {
-                        self.text_font.render(f'{"Open":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
-                        self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
-                        self.cam_font.render(' 1 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1105, 484, 42, 20),
-                        self.cam_font.render(' 2 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(972, 649, 42, 20),
-                        self.cam_font.render(' 3 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1073, 627, 42, 20),
-                        self.cam_font.render(' 4 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(990, 482, 42, 20),
-                        self.cam_font.render(' 5 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(905, 628, 42, 20),
-                        self.cam_font.render(' 6 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(971, 731, 42, 20),
-                        self.cam_small_font.render(' 7 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(938, 654, 24, 15),
-                        self.cam_small_font.render(' 8 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1050, 727, 24, 15),
-                        self.cam_small_font.render(' 9 ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1089, 727, 24, 15),
-                    }
-            else:
+            if self.stage == 'display':
                 if self.is_cam_ventilation:
                     self.buttons = {
                         self.text_font.render(f'{"Close":^86}', True, (255, 255, 255), (123, 0, 0)): pg.rect.Rect(0, 775, 1200, 25),
                         self.cam_font.render(' V ', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1120, 685, 42, 20),
                         self.cam_small_font.render(' 10', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1139, 735, 24, 15),
                         self.cam_small_font.render(' 11', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(957, 702, 24, 15),
-                        self.cam_small_font.render(' 12', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1037, 740, 24, 15)
+                        self.cam_small_font.render(' 12', True, (255, 255, 255), (123, 123, 123)): pg.rect.Rect(1037, 740, 24, 15),
+                        self.cam_small_font.render(' 3 ', True, (0, 0, 0) if self.door3 else (255, 255, 255), (0, 255, 0) if self.door3 else (255, 0, 0)): pg.rect.Rect(1037, 725, 24, 15)
                     }
                 else:
                     self.buttons = {
@@ -544,10 +558,65 @@ class GameDisplay:
     # Функция отрисовки
     def draw(self, stage, cam_num=1):
         if stage == 'office':
-            self.window.fill((0, 123, 0))
+            self.window.fill((0, 0, 123))
 
         elif stage == 'display':
             self.camera.draw(self.cam_num)
+
+# Класс камер
+class Camera:
+    # Конструктор
+    def __init__(self, window):
+        self.window = window
+
+    # Функция отрисовки
+    def draw(self, cam_num):
+        self.window.fill((cam_num*20, cam_num*20, cam_num*20))
+
+# Класс аниматроников
+class Animatronics:
+    # Конструктор
+    def __init__(self, name, pos=1):
+        self.name = name
+        self.map_pos = pos
+        self.stage = 0
+        self.frames = -600
+        self.is_attacked = False
+        self.patience = 0
+
+    # Функция отрисовки
+    def draw(self, window, map_num):
+        if self.map_pos == map_num:
+            if self.name == 'Man':
+                pg.draw.rect(window, (209, 188, 138), pg.rect.Rect(1150, 10, 20, 20))
+            elif self.name == 'Bear':
+                pg.draw.rect(window, (131, 71, 19), pg.rect.Rect(1170, 10, 20, 20))
+            elif self.name == 'Grandfather':
+                pg.draw.rect(window, (19, 29, 131), pg.rect.Rect(1150, 30, 20, 20))
+            elif self.name == 'Airplane':
+                pg.draw.rect(window, (255, 0, 0), pg.rect.Rect(1170, 30, 20, 20))
+
+    # Функция перемещения 
+    def move(self, current_night):
+        if self.name == 'Airplane':
+            if random.randint(current_night, 6) == 6:
+                self.patience += 1
+
+            if self.patience >= 6*12:
+                self.stage += 1
+
+                if self.stage == 1:
+                    self.frames = 120
+
+                if self.stage >= 5:
+                    self.map_pos = 9
+                    self.frames -= 1
+
+                if self.frames == -1:
+                    self.is_attacked = True
+                    self.stage = 0
+                    self.map_pos = 3
+                    self.patience = 0
 
 # Класс окна победы 
 class WinDisplay:
@@ -576,55 +645,38 @@ class WinDisplay:
         music = pg.mixer.Sound(r'sound\Alarm.mp3')
         pg.mixer.Channel(0).play(music)
 
-# Класс камер
-class Camera:
+# Класс окна проигрыша 
+class OverDisplay:
     # Конструктор
     def __init__(self, window):
         self.window = window
-        self.animatronics = [
-            Animatronics('Man'),
-            Animatronics('Bear'),
-            Animatronics('Grandfather'),
-            Animatronics('Airplane', 3)
-        ]
-        # self.man = Animatronics('Man')
-        # self.bear = Animatronics('bear')
-        # self.grandfather = Animatronics('grandfather')
-        # self.Airplane = Animatronics('Airplane')
-        # self.Airplane.map_pos = 3
+        self.text_font = pg.font.SysFont(r'couriernew', 50)
+        self.frames = 120
+        self.is_next_stage = False
 
     # Функция отрисовки
-    def draw(self, cam_num):
-        self.window.fill((cam_num*20, cam_num*20, cam_num*20))
-        for animatronic in self.animatronics:
-            animatronic.draw(self.window, cam_num)
+    def draw(self, killer):
+        self.window.fill((0, 0, 0))
 
+        if killer == 'Man':
+            ...
+        elif killer == 'Bear':
+            ...
+        elif killer == 'Grandfather':
+            ...
+        elif killer == 'Airplane':
+            ...
 
-# Класс аниматроников
-class Animatronics:
-    # Конструктор
-    def __init__(self, name, pos=1):
-        self.name = name
-        self.map_pos = pos
-        self.stage = 0
+        self.frames -= 1
 
-    # Функция отрисовки
-    def draw(self, window, map_num):
-        # if map_num == 1:
-        if self.map_pos == map_num:
-            if self.name == 'Man':
-                pg.draw.rect(window, (209, 188, 138), pg.rect.Rect(1150, 10, 20, 20))
-            elif self.name == 'Bear':
-                pg.draw.rect(window, (131, 71, 19), pg.rect.Rect(1170, 10, 20, 20))
-            elif self.name == 'Grandfather':
-                pg.draw.rect(window, (19, 29, 131), pg.rect.Rect(1150, 30, 20, 20))
-            elif self.name == 'Airplane':
-                pg.draw.rect(window, (255, 0, 0), pg.rect.Rect(1170, 30, 20, 20))
+        if self.frames <= 0:
+            self.is_next_stage = True
 
-    # Функция перемещения 
-    def move(self):
-        ...
-
+    # функция запуска музыки
+    def start_music(self):
+        # Запуск музыки
+        music = pg.mixer.Sound(r'sound\Game over.mp3')
+        pg.mixer.Channel(0).play(music)
 
 if __name__ == '__main__':
     pg.init()
